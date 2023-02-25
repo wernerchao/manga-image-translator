@@ -11,7 +11,7 @@ setup(
     classifiers=[
         "Programming Language :: Python :: 3",
     ],
-    packages=['manga_image_translator'],
+    packages=['manga_translator'],
     include_package_data=True,
     install_requires=[
         "networkx",
