@@ -11,3 +11,4 @@ models
 .env
 .env.local
 test/testdata/bboxes
+*.egg-info/
