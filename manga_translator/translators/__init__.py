@@ -67,7 +67,7 @@ prepare_selective_translator(get_translator)
 
 async def prepare(translator_key: str, src_lang: str, tgt_lang: str):
     translator = get_translator(translator_key)
-    translator.supports_languages(src_lang, tgt_lang, fatal=True)
+    translator.supports_languages(src_lang, tgt_lang, fatal=False)
     if isinstance(translator, OfflineTranslator):
         await translator.download()
 
