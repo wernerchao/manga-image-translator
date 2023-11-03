@@ -5,6 +5,9 @@ import torch
 import cv2
 import einops
 from typing import List, Tuple
+import time
+import hidet
+print(hidet.option.get_cache_dir())
 
 from .default_utils.DBNet_resnet34 import TextDetection as TextDetectionDefault
 from .default_utils import imgproc, dbnet_utils, craft_utils
@@ -19,7 +22,10 @@ def det_batch_forward_default(batch: np.ndarray, device: str) -> Tuple[np.ndarra
     batch = einops.rearrange(batch.astype(np.float32) / 127.5 - 1.0, 'n h w c -> n c h w')
     batch = torch.from_numpy(batch).to(device)
     with torch.no_grad():
+        start = time.time()
+        print("Rearrange not required")
         db, mask = MODEL(batch)
+        print("============Pure Detection Time============", time.time() - start)
         db = db.sigmoid().cpu().numpy()
         mask = mask.cpu().numpy()
     return db, mask
@@ -47,8 +53,13 @@ class DefaultDetector(OfflineDetector):
         self.device = device
         if device == 'cuda':
             self.model = self.model.cuda()
+        print("Compilation Start")
+        self.model = torch.compile(self.model, backend='hidet')
+        x = torch.rand(1, 3, 768, 1024).cuda()
         global MODEL
         MODEL = self.model
+        MODEL(x)
+        print("Compilation Done")
 
     async def _unload(self):
         del self.model
