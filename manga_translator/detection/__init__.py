@@ -29,5 +29,7 @@ async def dispatch(detector_key: str, image: np.ndarray, detect_size: int, text_
                    det_rearrange_max_batches: int, device: str = 'cpu', verbose: bool = False) -> Tuple[List[TextBlock], np.ndarray]:
     detector = get_detector(detector_key)
     if isinstance(detector, OfflineDetector):
+        print(isinstance(detector, OfflineDetector))
+        print()
         await detector.load(device)
     return await detector.detect(image, detect_size, text_threshold, box_threshold, unclip_ratio, det_rearrange_max_batches, verbose)

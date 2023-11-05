@@ -864,7 +864,6 @@ def det_rearrange_forward(
     db_lst, mask_lst = [], []
     for batch in batches:
         batch = np.array(batch)
-        print("Rearrange required")
         db, mask = dbnet_batch_forward(batch, device=device)
 
         for d, m in zip(db, mask):
