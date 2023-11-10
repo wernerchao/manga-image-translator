@@ -18,18 +18,21 @@ def det_batch_forward_default(batch: np.ndarray, device: str) -> Tuple[np.ndarra
     global MODEL
     if isinstance(batch, list):
         batch = np.array(batch)
+
     batch = einops.rearrange(batch.astype(np.float32) / 127.5 - 1.0, 'n h w c -> n c h w')
     batch = torch.from_numpy(batch).to(device)
+
+    torch.cuda.synchronize()
     with torch.no_grad():
-        db, mask = MODEL(batch)
-        print(type(db))
-        print(db.shape)
-        torch.cuda.synchronize()
         start = time.time()
-        db = db.sigmoid().cpu().numpy()
+        db, mask = MODEL(batch)
         torch.cuda.synchronize()
-        print("DB Time: ", time.time() - start)
-        mask = mask.cpu().numpy()
+        end = time.time()
+        print('Pure Detection Time: ', (end - start)*1000 , ' ms')
+        
+        db = db.float().sigmoid().cpu().numpy()
+        mask = mask.float().cpu().numpy()
+
     return db, mask
 
 
@@ -56,13 +59,12 @@ class DefaultDetector(OfflineDetector):
         self.device = device
         if device == 'cuda':
             self.model = self.model.cuda()
-        # print("Compilation Start")
-        # self.model = torch.compile(self.model, backend='hidet')
-        # x = torch.rand(1, 3, 768, 1024).cuda()
         global MODEL
         MODEL = self.model
-        # MODEL(x)
-        # print("Compilation Done")
+        input_data = einops.rearrange(np.random.rand(*(1, 1024, 768, 3)).astype(np.float32) / 127.5 - 1.0, 'n h w c -> n c h w')
+        input_data = torch.from_numpy(input_data).to('cuda')
+        for _ in range(3):
+            MODEL(input_data)
 
     async def _unload(self):
         del self.model
