@@ -16,12 +16,12 @@ def det_batch_forward_default(batch: np.ndarray, device: str) -> Tuple[np.ndarra
     global MODEL
     if isinstance(batch, list):
         batch = np.array(batch)
-    batch = einops.rearrange(batch.astype(np.float32) / 127.5 - 1.0, 'n h w c -> n c h w')
+    batch = einops.rearrange(batch.astype(np.float16) / 127.5 - 1.0, 'n h w c -> n c h w')
     batch = torch.from_numpy(batch).to(device)
     with torch.no_grad():
         db, mask = MODEL(batch)
-        db = db.sigmoid().cpu().numpy()
-        mask = mask.cpu().numpy()
+        db = db.float().sigmoid().cpu().numpy()
+        mask = mask.float().cpu().numpy()
     return db, mask
 
 class DefaultDetector(OfflineDetector):
@@ -48,7 +48,7 @@ class DefaultDetector(OfflineDetector):
         if device == 'cuda':
             self.model = self.model.cuda()
         global MODEL
-        MODEL = self.model
+        MODEL = self.model.half()
 
     async def _unload(self):
         del self.model
