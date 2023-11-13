@@ -21,9 +21,7 @@ def det_batch_forward_default(batch: np.ndarray, device: str) -> Tuple[np.ndarra
     batch = einops.rearrange(batch.astype(np.float16) / 127.5 - 1.0, 'n h w c -> n c h w')
     batch = torch.from_numpy(batch).to(device)
 
-    torch.cuda.synchronize()
     with torch.no_grad():
-        start = time.time()
         db, mask = MODEL(batch)
         db = db.float().sigmoid().cpu().numpy()
         mask = mask.float().cpu().numpy()
