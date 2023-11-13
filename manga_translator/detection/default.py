@@ -5,6 +5,8 @@ import torch
 import cv2
 import einops
 from typing import List, Tuple
+import time
+import hidet
 
 from .default_utils.DBNet_resnet34 import TextDetection as TextDetectionDefault
 from .default_utils import imgproc, dbnet_utils, craft_utils
@@ -16,13 +18,15 @@ def det_batch_forward_default(batch: np.ndarray, device: str) -> Tuple[np.ndarra
     global MODEL
     if isinstance(batch, list):
         batch = np.array(batch)
-    batch = einops.rearrange(batch.astype(np.float32) / 127.5 - 1.0, 'n h w c -> n c h w')
+    batch = einops.rearrange(batch.astype(np.float16) / 127.5 - 1.0, 'n h w c -> n c h w')
     batch = torch.from_numpy(batch).to(device)
+
     with torch.no_grad():
         db, mask = MODEL(batch)
-        db = db.sigmoid().cpu().numpy()
-        mask = mask.cpu().numpy()
+        db = db.to(torch.float32).sigmoid().cpu().numpy()
+        mask = mask.to(torch.float32).cpu().numpy()
     return db, mask
+
 
 class DefaultDetector(OfflineDetector):
     _MODEL_MAPPING = {
@@ -48,7 +52,7 @@ class DefaultDetector(OfflineDetector):
         if device == 'cuda':
             self.model = self.model.cuda()
         global MODEL
-        MODEL = self.model
+        MODEL = self.model.half()
 
     async def _unload(self):
         del self.model
@@ -69,7 +73,7 @@ class DefaultDetector(OfflineDetector):
             img_resized_h, img_resized_w = image.shape[:2]
             ratio_w = ratio_h = 1
             pad_h = pad_w = 0
-        self.logger.info(f'Detection resolution: {img_resized_w}x{img_resized_h}')
+        # self.logger.info(f'Detection resolution: {img_resized_w}x{img_resized_h}')
 
         mask = mask[0, 0, :, :]
         det = dbnet_utils.SegDetectorRepresenter(text_threshold, box_threshold, unclip_ratio=unclip_ratio)
