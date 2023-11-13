@@ -23,8 +23,8 @@ def det_batch_forward_default(batch: np.ndarray, device: str) -> Tuple[np.ndarra
 
     with torch.no_grad():
         db, mask = MODEL(batch)
-        db = db.float().sigmoid().cpu().numpy()
-        mask = mask.float().cpu().numpy()
+        db = db.to(torch.float32).sigmoid().cpu().numpy()
+        mask = mask.to(torch.float32).cpu().numpy()
     return db, mask
 
 
