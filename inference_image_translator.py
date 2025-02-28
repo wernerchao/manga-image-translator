@@ -121,7 +121,7 @@ def get_config_variations():
         "det_auto_rotate": [False],
         "det_invert": [False],
         "det_gamma_correct": [False],
-        "unclip_ratio": [3, 5, 7, 9],
+        "unclip_ratio": [3],
         "detection_sizes": [2048],
         "text_thresholds": [0.6],
         "box_thresholds": [0.7],
