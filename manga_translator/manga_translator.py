@@ -238,8 +238,9 @@ class MangaTranslator:
         
         # -- Textline merge
         await self._report_progress('textline_merge')
-        ctx.text_regions = await self._run_textline_merge(config, ctx)
-
+        ctx.text_regions = await self._run_textline_merge(config, ctx) # NOTE: bug is here
+        ctx.text_regions = self.increase_text_region_size(ctx.text_regions, scale_factor=1.3, image_width=ctx.img_rgb.shape[1], image_height=ctx.img_rgb.shape[0])
+        
         if self.verbose:
             bboxes = visualize_textblocks(cv2.cvtColor(ctx.img_rgb, cv2.COLOR_BGR2RGB), ctx.text_regions)
             cv2.imwrite(self._result_path('bboxes.png'), bboxes)
@@ -324,6 +325,7 @@ class MangaTranslator:
         return new_textlines
 
     async def _run_textline_merge(self, config: Config, ctx: Context):
+        # ctx.textlines = self.increase_textline_size(ctx.textlines, scale_factor=1.5)
         text_regions = await dispatch_textline_merge(ctx.textlines, ctx.img_rgb.shape[1], ctx.img_rgb.shape[0],
                                                      verbose=self.verbose)
         # Filter out languages to skip  
@@ -388,16 +390,16 @@ class MangaTranslator:
             region.text = stripped_text.strip()     
             
             if len(region.text) >= config.ocr.min_text_length \
-                    and not is_valuable_text(region.text) \
-                    or (not config.translator.no_text_lang_skip and langcodes.tag_distance(region.source_lang, config.translator.target_lang) == 0):
+                    and not is_valuable_text(region.text): # \
+                    # or (not config.translator.no_text_lang_skip and langcodes.tag_distance(region.source_lang, config.translator.target_lang) == 0):
                 if region.text.strip():
                     logger.info(f'Filtered out: {region.text}')
                     if len(region.text) < config.ocr.min_text_length:
                         logger.info('Reason: Text length is less than the minimum required length.')
                     elif not is_valuable_text(region.text):
                         logger.info('Reason: Text is not considered valuable.')
-                    elif langcodes.tag_distance(region.source_lang, config.translator.target_lang) == 0:
-                        logger.info('Reason: Text language matches the target language and no_text_lang_skip is False.')
+                    # elif langcodes.tag_distance(region.source_lang, config.translator.target_lang) == 0:
+                    #     logger.info('Reason: Text language matches the target language and no_text_lang_skip is False.')
             else:
                 if config.render.font_color_fg or config.render.font_color_bg:
                     if config.render.font_color_bg:
@@ -686,3 +688,78 @@ class MangaTranslator:
                 logger.error(LOG_MESSAGES_ERROR[state])
 
         self.add_progress_hook(ph)
+
+    def increase_textline_size(self, textlines: list, scale_factor: float) -> list:
+        """
+        Increases the size of textlines by a specified scale factor.
+
+        Args:
+            textlines (list): A list of textline objects, each having bounding box coordinates.
+            scale_factor (float): The factor by which to increase the size of the textlines.
+
+        Returns:
+            list: A list of textline objects with updated bounding box coordinates.
+        """
+        for textline in textlines:
+            # Assuming textline has attributes for bounding box coordinates (x1, y1, x2, y2)
+            x1, y1, x2, y2 = textline.xyxy
+            width = x2 - x1
+            height = y2 - y1
+            
+            # Calculate new coordinates
+            new_width = width * scale_factor
+            new_height = height * scale_factor
+            
+            # Center the new bounding box around the original center
+            center_x = (x1 + x2) / 2
+            center_y = (y1 + y2) / 2
+            
+            new_x1 = int(center_x - new_width / 2)
+            new_y1 = int(center_y - new_height / 2)
+            new_x2 = int(center_x + new_width / 2)
+            new_y2 = int(center_y + new_height / 2)
+            
+            # Update the textline's bounding box
+            textline.xyxy = (new_x1, new_y1, new_x2, new_y2)
+            # print("\n")
+            # print(F"x1, y1, x2, y2: {x1, y1, x2, y2}")
+            # print(F"new_x1, new_y1, new_x2, new_y2: {new_x1, new_y1, new_x2, new_y2}")
+
+        return textlines
+
+    def increase_text_region_size(self, text_regions: list, scale_factor: float, image_width: int, image_height: int) -> list:
+        """
+        Increases the size of text regions by a specified scale factor, ensuring the new region won't go out of the image boundaries.
+
+        Args:
+            text_regions (list): A list of text region objects, each having bounding box coordinates.
+            scale_factor (float): The factor by which to increase the size of the text regions.
+            image_width (int): The width of the image.
+            image_height (int): The height of the image.
+
+        Returns:
+            list: A list of text region objects with updated bounding box coordinates.
+        """
+        for region in text_regions:
+            # Assuming region has attributes for bounding box coordinates (x1, y1, x2, y2)
+            x1, y1, x2, y2 = region.xyxy
+            width = x2 - x1
+            height = y2 - y1
+
+            # Calculate new coordinates
+            new_width = width * scale_factor
+            new_height = height * scale_factor
+
+            # Center the new bounding box around the original center
+            center_x = (x1 + x2) / 2
+            center_y = (y1 + y2) / 2
+
+            new_x1 = int(max(center_x - new_width / 2, 0))
+            new_y1 = int(max(center_y - new_height / 2, 0))
+            new_x2 = int(min(center_x + new_width / 2, image_width))
+            new_y2 = int(min(center_y + new_height / 2, image_height))
+
+            # Update the region's bounding box
+            region.xyxy = np.array([new_x1, new_y1, new_x2, new_y2])
+
+        return text_regions
