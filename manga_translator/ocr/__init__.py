@@ -5,14 +5,17 @@ from .model_32px import Model32pxOCR
 from .model_48px import Model48pxOCR
 from .model_48px_ctc import Model48pxCTCOCR
 from .model_manga_ocr import ModelMangaOCR
+from .model_gemini_ocr import ModelGeminiOCR
 from ..config import Ocr, OcrConfig
 from ..utils import Quadrilateral
+import os
 
 OCRS = {
     Ocr.ocr32px: Model32pxOCR,
     Ocr.ocr48px: Model48pxOCR,
     Ocr.ocr48px_ctc: Model48pxCTCOCR,
     Ocr.mocr: ModelMangaOCR,
+    Ocr.gemini: ModelGeminiOCR,
 }
 ocr_cache = {}
 
@@ -21,7 +24,14 @@ def get_ocr(key: Ocr, *args, **kwargs) -> CommonOCR:
         raise ValueError(f'Could not find OCR for: "{key}". Choose from the following: %s' % ','.join(OCRS))
     if not ocr_cache.get(key):
         ocr = OCRS[key]
-        ocr_cache[key] = ocr(*args, **kwargs)
+        if key == Ocr.gemini:
+            # Add explicit API key argument
+            api_key = os.environ.get("GEMINI_API_KEY")
+            if not api_key:
+                raise ValueError("Gemini API key is required. Set GEMINI_API_KEY environment variable.")
+            ocr_cache[key] = ocr(api_key=api_key, *args, **kwargs)
+        else:
+            ocr_cache[key] = ocr(*args, **kwargs)
     return ocr_cache[key]
 
 async def prepare(ocr_key: Ocr, device: str = 'cpu'):
