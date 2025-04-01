@@ -53,10 +53,9 @@ class GeminiTranslator(ConfigGemini, CommonTranslator):
         if not GEMINI_API_KEY and check_gemini_key:
             raise MissingAPIKeyException('GEMINI_API_KEY environment variable required')
 
-        # Use the REST API base URL
         self.api_base: str = GEMINI_API_BASE or "https://generativelanguage.googleapis.com/v1beta"
         self.api_key: str = GEMINI_API_KEY
-        self.model_name: str = "gemini-2.0-flash"  # Adjust based on actual model name
+        self.model_name: str = "gemini-2.0-flash"
         self.token_count: int = 0
         self.token_count_last: int = 0
         self._last_request_ts: float = 0
@@ -300,7 +299,6 @@ class GeminiTranslator(ConfigGemini, CommonTranslator):
         headers: Dict[str, str] = {"Content-Type": "application/json"}
         generation_config: Dict[str, Any] = self.generation_config
 
-        # Construct the request payload
         payload: Dict[str, Any] = {
             "contents": [{"parts": [{"text": prompt}]}],
             "generationConfig": {
