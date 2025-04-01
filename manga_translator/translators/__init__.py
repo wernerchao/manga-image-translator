@@ -22,6 +22,7 @@ from .sakura import SakuraTranslator
 from .qwen2 import Qwen2Translator, Qwen2BigTranslator
 from .groq import GroqTranslator
 from .custom_openai import CustomOpenAiTranslator
+from .gemini import GeminiTranslator
 from ..config import Translator, TranslatorConfig, TranslatorChain
 from ..utils import Context
 
@@ -47,6 +48,7 @@ TRANSLATORS = {
     Translator.papago: PapagoTranslator,
     Translator.caiyun: CaiyunTranslator,
     Translator.chatgpt: OpenAITranslator,
+    Translator.gemini: GeminiTranslator,
     Translator.none: NoneTranslator,
     Translator.original: OriginalTranslator,
     Translator.sakura: SakuraTranslator,

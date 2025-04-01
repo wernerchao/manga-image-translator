@@ -130,6 +130,7 @@ class Translator(str, Enum):
     mbart50 = "mbart50"
     qwen2 = "qwen2"
     qwen2_big = "qwen2_big"
+    gemini = "gemini"
 
     def __str__(self):
         return self.name
