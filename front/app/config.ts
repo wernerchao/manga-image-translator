@@ -30,6 +30,7 @@ export const textDetectorOptions = [
   { value: "default", label: "Default" },
   { value: "ctd", label: "CTD" },
   { value: "paddle", label: "Paddle" },
+  { value: "dual", label: "Dual" },
 ];
 
 export const inpainterOptions = [
