@@ -12,14 +12,14 @@ from ..utils import Quadrilateral
 
 logger = logging.getLogger('manga_translator')
 
-class DualDetector(CommonDetector):
+class SwitchDetector(CommonDetector):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.default_detector = DefaultDetector(*args, **kwargs)
         self.ctd_detector = ComicTextDetector(*args, **kwargs)
-        
+
         self.aspect_ratio_threshold = kwargs.get('aspect_ratio_threshold', 0.613)
-        logger.info(f"DualDetector initialized with aspect_ratio_threshold: {self.aspect_ratio_threshold}")
+        logger.info(f"SwitchDetector initialized with aspect_ratio_threshold: {self.aspect_ratio_threshold}")
 
     async def load(self, device: str):
         """Load models for both detectors."""

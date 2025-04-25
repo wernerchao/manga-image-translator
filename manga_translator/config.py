@@ -87,7 +87,7 @@ class Detector(str, Enum):
     craft = "craft"
     paddle = "paddle"
     none = "none"
-    dual = "dual"
+    switch = "switch"
 
 class Inpainter(str, Enum):
     default = "default"
@@ -254,7 +254,7 @@ class TranslatorConfig(BaseModel):
 
 class DetectorConfig(BaseModel):
     """"""
-    detector: Detector = Detector.dual
+    detector: Detector = Detector.switch
     """"Text detector used for creating a text mask from an image, DO NOT use craft for manga, it\'s not designed for it"""
     detection_size: int = 2048
     """Size of image used for detection"""

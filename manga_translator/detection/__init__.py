@@ -7,7 +7,7 @@ from .ctd import ComicTextDetector
 from .craft import CRAFTDetector
 from .paddle import PaddleDetector
 from .none import NoneDetector
-from .dual import DualDetector  
+from .switch import SwitchDetector
 from .common import CommonDetector, OfflineDetector
 from ..config import Detector
 
@@ -20,7 +20,7 @@ DETECTORS = {
     Detector.craft: CRAFTDetector,
     Detector.paddle: PaddleDetector,
     Detector.none: NoneDetector,
-    Detector.dual: DualDetector,
+    Detector.switch: SwitchDetector,
 }
 detector_cache = {}
 
@@ -36,7 +36,7 @@ async def prepare(detector_key: Detector):
     detector = get_detector(detector_key)
     if isinstance(detector, OfflineDetector):
         await detector.download()
-    elif isinstance(detector, DualDetector):
+    elif isinstance(detector, SwitchDetector):
         await detector.default_detector.download()
         await detector.ctd_detector.download()
 
@@ -44,8 +44,8 @@ async def dispatch(detector_key: Detector, image: np.ndarray, detect_size: int, 
                    invert: bool, gamma_correct: bool, rotate: bool, auto_rotate: bool = False, device: str = 'cpu', verbose: bool = False):
     try:
         detector = get_detector(detector_key)
-        if isinstance(detector, (OfflineDetector, DualDetector)):
-            if not hasattr(detector, 'model') or detector.model is None or isinstance(detector, DualDetector):
+        if isinstance(detector, (OfflineDetector, SwitchDetector)):
+            if not hasattr(detector, 'model') or detector.model is None or isinstance(detector, SwitchDetector):
                 logger.info(f"Loading {detector_key} model...")
                 await detector.load(device)
                 
