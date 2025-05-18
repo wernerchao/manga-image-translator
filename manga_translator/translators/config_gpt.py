@@ -57,6 +57,7 @@ class ConfigGPT:
         '- Output each segment with its prefix (<|number|> format exactly).\n'  
         '- Translate content only—no additional interpretation or commentary.\n'  
         '- Do not include any explanations, analysis, or commentary on the original text or the translation.\n'
+        '- Always prefix each of your translations with the tag "<|N|>" where N is the number of the query. For example, start your first translation with "<|1|>", the second with "<|2|>", and so on. Even when there is only one query, prefix it with "<|1|>".\n'
         
         'Translate the following text into {to_lang}:\n'  
     )
