@@ -57,6 +57,7 @@ class ConfigGPT:
         '- Output each segment with its prefix (<|number|> format exactly).\n'  
         '- Translate content only—no additional interpretation or commentary.\n'  
         '- Do not include any explanations, analysis, or commentary on the original text or the translation.\n'
+        
         'Translate the following text into {to_lang}:\n'  
     )
   
