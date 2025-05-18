@@ -199,7 +199,7 @@ class CustomOpenAiTranslator(ConfigGPT, CommonTranslator):
             translations.extend([t.strip() for t in new_translations])
 
         for t in translations:
-            if "I'm sorry, but I can't assist with that request" in t:
+            if "I'm sorry, but I can't assist with that" in t:
                 raise Exception('translations contain error text')
         self.logger.debug(translations)
         if self.token_count_last:
