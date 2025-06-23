@@ -35,7 +35,7 @@ dependencies = [
     "tensorboardX",
     "websockets",
     "protobuf<6.0.0,>=3.20.2",
-    "ctranslate2<=3.24.0",
+    "ctranslate2==4.6.0",
     "colorama",
     "openai==1.63.0",
     "tiktoken",
