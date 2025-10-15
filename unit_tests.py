@@ -198,14 +198,15 @@ class TestLanguageDetection(unittest.IsolatedAsyncioTestCase):
         return regions
 
     async def test_arabic_bypass_with_arabic_content(self):
-        # This test will pass even without arabic bypass since Arabic did not pass through arabic reshaper 
-        # Arabic reshaper is causing the detection to fail
-        """Test that ARA target bypasses detection with Arabic content"""
+        """Test that ARA target bypasses detection with Arabic content.
+        This test will pass even without arabic bypass since Arabic did not pass through arabic reshaper.
+        Arabic reshaper is causing the detection to fail.
+        """
         print(f"  Testing: ARA target with Arabic content")
         regions = self.create_mock_regions(LANGUAGE_PAIRS["ARA"])
         
         result = await self.translator._check_target_language_ratio(
-            text_regions=regions, target_lang="ARA", min_ratio=0.5
+            text_regions=regions, target_lang="ARA"
         )
         
         self.assertTrue(result, "Should bypass for ARA target with Arabic content")
@@ -220,7 +221,7 @@ class TestLanguageDetection(unittest.IsolatedAsyncioTestCase):
         regions = self.create_mock_regions(translations)
         
         result = await self.translator._check_target_language_ratio(
-            text_regions=regions, target_lang="ARA", min_ratio=0.5
+            text_regions=regions, target_lang="ARA"
         )
         
         self.assertTrue(result, "Should bypass for ARA target with Arabic content and Arabic reshaper")
@@ -231,7 +232,7 @@ class TestLanguageDetection(unittest.IsolatedAsyncioTestCase):
         regions = self.create_mock_regions(LANGUAGE_PAIRS["ENG"])
         
         result = await self.translator._check_target_language_ratio(
-            text_regions=regions, target_lang="ENG", min_ratio=0.5
+            text_regions=regions, target_lang="ENG"
         )
         
         self.assertTrue(result, "Should detect English content correctly")
@@ -242,7 +243,7 @@ class TestLanguageDetection(unittest.IsolatedAsyncioTestCase):
         regions = self.create_mock_regions(LANGUAGE_PAIRS["JPN"])
         
         result = await self.translator._check_target_language_ratio(
-            text_regions=regions, target_lang="JPN", min_ratio=0.5
+            text_regions=regions, target_lang="JPN"
         )
         
         self.assertTrue(result, "Should detect Japanese content correctly")
@@ -253,7 +254,7 @@ class TestLanguageDetection(unittest.IsolatedAsyncioTestCase):
         regions = self.create_mock_regions(LANGUAGE_PAIRS["KOR"])
         
         result = await self.translator._check_target_language_ratio(
-            text_regions=regions, target_lang="KOR", min_ratio=0.5
+            text_regions=regions, target_lang="KOR"
         )
         
         self.assertTrue(result, "Should detect Korean content correctly")
@@ -264,7 +265,7 @@ class TestLanguageDetection(unittest.IsolatedAsyncioTestCase):
         regions = self.create_mock_regions(LANGUAGE_PAIRS["THA"])
         
         result = await self.translator._check_target_language_ratio(
-            text_regions=regions, target_lang="THA", min_ratio=0.5
+            text_regions=regions, target_lang="THA"
         )
         
         self.assertTrue(result, "Should detect Thai content correctly")
@@ -275,7 +276,7 @@ class TestLanguageDetection(unittest.IsolatedAsyncioTestCase):
         regions = self.create_mock_regions(LANGUAGE_PAIRS["ARA"])
         
         result = await self.translator._check_target_language_ratio(
-            text_regions=regions, target_lang="ENG", min_ratio=0.5
+            text_regions=regions, target_lang="ENG"
         )
         
         self.assertFalse(result, "Should fail when content doesn't match target")

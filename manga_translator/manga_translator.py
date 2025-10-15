@@ -1044,7 +1044,6 @@ class MangaTranslator:
                 return await translator._translate(ctx.from_lang, config.translator.target_lang, texts, ctx)
             else:
                 result = await translator._translate(ctx.from_lang, config.translator.target_lang, texts)
-                print(f"result: {result}")
                 return await self._fallback_if_refused(result, texts, config, ctx)
 
 
