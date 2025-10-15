@@ -2,6 +2,9 @@ import unittest
 import sys
 from typing import List
 from unittest.mock import Mock, AsyncMock, patch
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from manga_translator.config import Config, TranslatorConfig
 from manga_translator.manga_translator import MangaTranslator
