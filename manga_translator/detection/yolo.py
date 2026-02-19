@@ -28,7 +28,7 @@ class YoloDetector(OfflineDetector):
         try:
             from ultralytics import YOLO
 
-            self.model = YOLO("yolo26s.pt")
+            self.model = YOLO("yolo12l_animetext.pt")
             try:
                 self.model.to(self.device)
             except Exception as error:
@@ -73,11 +73,10 @@ class YoloDetector(OfflineDetector):
 
         results = self.model.predict(
             source=image,
-            # imgsz=image_size,
+            imgsz=image_size,
             conf=conf_threshold,
             verbose=verbose,
             device=self.device,
-            text=["text region"],
         )
 
         if not results:
