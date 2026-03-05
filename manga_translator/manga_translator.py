@@ -2650,12 +2650,6 @@ class MangaTranslator:
             # 如果区域数量不超过10个，跳过此检查
             return True
 
-        # Special Case for Arabic, Skip Language Check
-        # Because Arabic goes through arabic-reshaper
-        if target_lang.upper() == 'ARA':
-            logger.debug('Skipping language check for Arabic')
-            return True
-            
         # 合并所有翻译文本
         all_translations = []
         for region in text_regions:
@@ -2692,7 +2686,7 @@ class MangaTranslator:
                 results = detect(merged_text, model='lite', k=1)
                 fast_detected_lang = results[0]['lang']  
                 fast_confidence = results[0]['score']
-                if fast_confidence >= 0.8:
+                if fast_confidence >= 0.9:
                     fast_detected_language = ISO_639_1_TO_VALID_LANGUAGES.get(fast_detected_lang, 'UNKNOWN')
                     if fast_detected_language != 'UNKNOWN':
                         fast_detected_language = fast_detected_language.upper()
