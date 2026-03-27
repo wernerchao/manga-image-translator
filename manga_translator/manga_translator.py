@@ -2689,13 +2689,10 @@ class MangaTranslator:
         
         if not is_target_lang:
             try:
-                min_confidence = 0.8
-                if target_lang.upper() == 'CHS' or target_lang.upper() == 'CHT':
-                    min_confidence = 0.9
                 results = detect(merged_text, model='lite', k=1)
                 fast_detected_lang = results[0]['lang']  
                 fast_confidence = results[0]['score']
-                if fast_confidence >= min_confidence:
+                if fast_confidence >= 0.9:
                     fast_detected_language = ISO_639_1_TO_VALID_LANGUAGES.get(fast_detected_lang, 'UNKNOWN')
                     if fast_detected_language != 'UNKNOWN':
                         fast_detected_language = fast_detected_language.upper()
