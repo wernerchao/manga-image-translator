@@ -49,7 +49,7 @@ langcodes
 manga-ocr
 langdetect
 pydensecrf@https://github.com/lucasb-eyer/pydensecrf/archive/refs/heads/master.zip
-accelerate==0.20.3 # compatible with pytorch 2.0.1
+accelerate
 bitsandbytes
 uvicorn
 fastapi

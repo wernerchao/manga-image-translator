@@ -8,9 +8,9 @@ requires-python = ">=3.10, <3.12"
 license = "GPL-3.0-only"
 dependencies = [
     "networkx",
-    "torch",
+    "torch==2.7.0+cu128",
     "groq",
-    "torchvision",
+    "torchvision==0.22.0+cu128",
     "torch-summary",
     "einops",
     "scikit-image",
@@ -35,7 +35,7 @@ dependencies = [
     "tensorboardX",
     "websockets",
     "protobuf<6.0.0,>=3.20.2",
-    "ctranslate2<=3.24.0",
+    "ctranslate2==4.6.0",
     "colorama",
     "openai==1.63.0",
     "tiktoken",
@@ -58,7 +58,7 @@ dependencies = [
     "manga-ocr",
     "langdetect",
     "pydensecrf@https://github.com/lucasb-eyer/pydensecrf/archive/refs/heads/master.zip",
-    "accelerate==0.20.3", # compatible with pytorch 2.0.1
+    "accelerate",
     "bitsandbytes",
     "uvicorn",
     "fastapi",
