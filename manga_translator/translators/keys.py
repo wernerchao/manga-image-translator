@@ -40,9 +40,7 @@ GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-1.5-flash-002')
 # deepseek
 DEEPSEEK_API_KEY = os.getenv('DEEPSEEK_API_KEY', '')
 DEEPSEEK_API_BASE  = os.getenv('DEEPSEEK_API_BASE', 'https://api.deepseek.com')
-DEEPSEEK_MODEL  = os.getenv('DEEPSEEK_MODEL', 'deepseek-chat') # Or: "deepseek-reasoner"
-# deepseek-flash thinks by default, which is far slower; "enabled" or "disabled"
-DEEPSEEK_THINKING = os.getenv('DEEPSEEK_THINKING', 'disabled')
+DEEPSEEK_MODEL  = os.getenv('DEEPSEEK_MODEL', 'deepseek-flash')
 
 # Together AI
 TOGETHER_API_KEY = os.getenv('TOGETHER_API_KEY', '')

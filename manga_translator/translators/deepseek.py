@@ -11,7 +11,7 @@ import time
 from typing import List
 from .common import MissingAPIKeyException
 from .common_gpt import CommonGPTTranslator
-from .keys import DEEPSEEK_API_KEY, DEEPSEEK_API_BASE, DEEPSEEK_MODEL, DEEPSEEK_THINKING
+from .keys import DEEPSEEK_API_KEY, DEEPSEEK_API_BASE, DEEPSEEK_MODEL
 from .tokenizers.token_counters import deepseekTokenCounter
 
 
@@ -251,8 +251,8 @@ class DeepseekTranslator(CommonGPTTranslator):
             'temperature': self.temperature,
             'top_p': self.top_p,
 
-            # deepseek-flash defaults to thinking mode; see keys.DEEPSEEK_THINKING.
-            'extra_body': {'thinking': {'type': DEEPSEEK_THINKING}},
+            # deepseek-flash thinks by default, which is far slower; we never want it.
+            'extra_body': {'thinking': {'type': 'disabled'}},
         }
         try:
             response = await self.client.beta.chat.completions.parse(**kwargs)
