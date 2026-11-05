@@ -250,6 +250,9 @@ class DeepseekTranslator(CommonGPTTranslator):
             
             'temperature': self.temperature,
             'top_p': self.top_p,
+
+            # deepseek-flash thinks by default, which is far slower; we never want it.
+            'extra_body': {'thinking': {'type': 'disabled'}},
         }
         try:
             response = await self.client.beta.chat.completions.parse(**kwargs)
