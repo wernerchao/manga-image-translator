@@ -126,11 +126,7 @@ def make_page(seed, width = 420, height = 360):
 
 
 @pytest.mark.parametrize('seed', [0, 1, 2])
-@pytest.mark.parametrize('vectorized', [True, False])
-def test_complete_mask_matches_reference(seed, vectorized, monkeypatch):
-    if vectorized and not text_mask_utils.SHAPELY_VECTORIZED:
-        pytest.skip('shapely < 2 has no vectorised geometry functions')
-    monkeypatch.setattr(text_mask_utils, 'SHAPELY_VECTORIZED', vectorized)
+def test_complete_mask_matches_reference(seed):
     img, mask, textlines = make_page(seed)
 
     expected = complete_mask_reference(img.copy(), mask.copy(), textlines)

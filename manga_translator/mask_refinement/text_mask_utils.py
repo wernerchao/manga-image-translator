@@ -16,9 +16,6 @@ from ..utils import Quadrilateral, image_resize
 
 COLOR_RANGE_SIGMA = 1.5 # how many stddev away is considered the same color
 
-# shapely 2 can intersect one geometry with an array of geometries in a single call.
-# requirements.txt does not pin shapely, so keep the per-polygon loop for shapely 1.x.
-SHAPELY_VECTORIZED = int(shapely.__version__.split('.')[0]) >= 2
 
 # Bilateral filter applied to the image before DenseCRF. With d = 17 every output pixel
 # depends only on input pixels within BILATERAL_RADIUS of it.
@@ -127,9 +124,8 @@ def bilateral_filter_regions(img: np.ndarray, rects: List[Tuple[int, int, int, i
 def complete_mask(img: np.ndarray, mask: np.ndarray, textlines: List[Quadrilateral], keep_threshold = 1e-2, dilation_offset = 0,kernel_size=3):
     bboxes = [txtln.aabb.xywh for txtln in textlines]
     polys = [Polygon(txtln.pts) for txtln in textlines]
-    if SHAPELY_VECTORIZED:
-        polys_arr = np.array(polys, dtype = object)
-        polys_area = shapely.area(polys_arr)
+    polys_arr = np.array(polys, dtype = object)
+    polys_area = shapely.area(polys_arr)
     for (x, y, w, h) in bboxes:
         cv2.rectangle(mask, (x, y), (x + w, y + h), (0), 1)
     num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(mask)
@@ -154,18 +150,9 @@ def complete_mask(img: np.ndarray, mask: np.ndarray, textlines: List[Quadrilater
         cc_pts = np.array([[x1, y1], [x1 + w1, y1], [x1 + w1, y1 + h1], [x1, y1 + h1]])
         cc_poly = Polygon(cc_pts)
 
-        if SHAPELY_VECTORIZED:
-            # One call against all textline polygons instead of one call per textline
-            overlapping_area = shapely.area(shapely.intersection(polys_arr, cc_poly))
-            ratio_mat[label] = overlapping_area / np.minimum(area1, polys_area)
-            dist_mat[label] = shapely.distance(polys_arr, cc_poly.centroid)
-        else:
-            for tl_idx in range(M):
-                area2 = polys[tl_idx].area
-                overlapping_area = polys[tl_idx].intersection(cc_poly).area
-                ratio_mat[label, tl_idx] = overlapping_area / min(area1, area2)
-                dist_mat[label, tl_idx] = polys[tl_idx].distance(cc_poly.centroid)
-                # print(textlines[tl_idx].pts, cc_pts, '->', overlapping_area, min(area1, area2), '=', overlapping_area / min(area1, area2), '|', polys[tl_idx].distance(cc_poly))
+        overlapping_area = shapely.area(shapely.intersection(polys_arr, cc_poly))
+        ratio_mat[label] = overlapping_area / np.minimum(area1, polys_area)
+        dist_mat[label] = shapely.distance(polys_arr, cc_poly.centroid)
 
         avg = np.argmax(ratio_mat[label])
         # print(avg, 'overlap:', ratio_mat[label, avg], '<=', keep_threshold)
