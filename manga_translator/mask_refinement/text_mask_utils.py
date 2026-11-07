@@ -100,6 +100,7 @@ def refine_mask(rgbimg, rawmask):
     crf_mask = np.array(res * 255, dtype=np.uint8)
     return crf_mask
 
+
 def bilateral_filter_regions(img: np.ndarray, rects: List[Tuple[int, int, int, int]]) -> np.ndarray:
     """
     Same as `cv2.bilateralFilter(img, 17, 80, 80)` inside each (x, y, w, h) rect; zero elsewhere.
@@ -124,7 +125,7 @@ def bilateral_filter_regions(img: np.ndarray, rects: List[Tuple[int, int, int, i
 def complete_mask(img: np.ndarray, mask: np.ndarray, textlines: List[Quadrilateral], keep_threshold = 1e-2, dilation_offset = 0,kernel_size=3):
     bboxes = [txtln.aabb.xywh for txtln in textlines]
     polys = [Polygon(txtln.pts) for txtln in textlines]
-    polys_arr = np.array(polys, dtype = object)
+    polys_arr = np.array(polys, dtype=object)
     polys_area = shapely.area(polys_arr)
     for (x, y, w, h) in bboxes:
         cv2.rectangle(mask, (x, y), (x + w, y + h), (0), 1)
