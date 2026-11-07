@@ -7,7 +7,7 @@ einops
 scikit-image
 opencv-python
 pyclipper
-shapely
+shapely>=2
 requests
 cryptography
 freetype-py
