@@ -48,9 +48,9 @@ class OpenAITranslator(ConfigGPT, CommonTranslator):
         }
         if OPENAI_HTTP_PROXY:
             from httpx import AsyncClient
-            client_args["http_client"] = AsyncClient(proxies={
-                "all://*openai.com": f"http://{OPENAI_HTTP_PROXY}"
-            })
+            # This client only talks to the OpenAI API, so one proxy for all its traffic
+            # matches the old "all://*openai.com" mapping (httpx>=0.28 has no `proxies=`).
+            client_args["http_client"] = AsyncClient(proxy=f"http://{OPENAI_HTTP_PROXY}")
 
         self.client = openai.AsyncOpenAI(**client_args)
         self.token_count = 0

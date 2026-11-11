@@ -30,7 +30,7 @@ ctranslate2==4.6.0 # <=3.24.0 last version compatible with CUDA 11
 colorama
 openai==1.63.0
 tiktoken
-httpx==0.27.2 # stop before blocking change in 0.28.0
+httpx==0.28.1 # 0.28 removed `proxies=`; translators use `proxy=`. Needed by ultralytics on Python 3.11
 open_clip_torch
 safetensors
 pandas
@@ -48,7 +48,7 @@ pyhyphen
 langcodes
 manga-ocr
 langdetect
-pydensecrf@https://github.com/lucasb-eyer/pydensecrf/archive/refs/heads/master.zip
+pydensecrf@https://github.com/lucasb-eyer/pydensecrf/archive/2723c7fa4f2ead16ae1ce3d8afe977724bb8f87f.zip
 accelerate
 bitsandbytes
 uvicorn
