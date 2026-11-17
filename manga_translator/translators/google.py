@@ -34,17 +34,13 @@ EXCLUDES = ('en', 'ca', 'fr')
 
 RPC_ID = 'MkEWBc'
 
+# One proxy URL for both http and https traffic (httpx>=0.28 takes `proxy=`, not `proxies=`).
 SYS_PROXY = urllib.request.getproxies()
 SYS_HTTP_PROXY = None
 if 'http' in SYS_PROXY:
-    SYS_HTTP_PROXY = {}
-    SYS_HTTP_PROXY['http'] = SYS_PROXY['http']
-    SYS_HTTP_PROXY['https'] = SYS_PROXY['http']
-elif OPENAI_HTTP_PROXY :
-    SYS_HTTP_PROXY = {
-        "http": "http://%s" % OPENAI_HTTP_PROXY,
-        "https": "http://%s" % OPENAI_HTTP_PROXY
-    }
+    SYS_HTTP_PROXY = SYS_PROXY['http']
+elif OPENAI_HTTP_PROXY:
+    SYS_HTTP_PROXY = "http://%s" % OPENAI_HTTP_PROXY
 
 
 class GoogleTranslator(CommonTranslator):
@@ -114,7 +110,7 @@ class GoogleTranslator(CommonTranslator):
 
         super().__init__()
 
-        self.client = httpx.AsyncClient(http2=http2, proxies=SYS_HTTP_PROXY)
+        self.client = httpx.AsyncClient(http2=http2, proxy=SYS_HTTP_PROXY)
         # if proxies is not None:  # pragma: nocover
 
         self.client.headers.update({
