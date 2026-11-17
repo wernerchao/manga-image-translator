@@ -5,6 +5,7 @@ import cv2
 import math
 
 from tqdm import tqdm
+import shapely
 from shapely.geometry import Polygon
 # from sklearn.mixture import BayesianGaussianMixture
 # from functools import reduce
@@ -14,6 +15,12 @@ from shapely.geometry import Polygon
 from ..utils import Quadrilateral, image_resize
 
 COLOR_RANGE_SIGMA = 1.5 # how many stddev away is considered the same color
+
+
+# Bilateral filter applied to the image before DenseCRF. With d = 17 every output pixel
+# depends only on input pixels within BILATERAL_RADIUS of it.
+BILATERAL_D = 17
+BILATERAL_RADIUS = BILATERAL_D // 2
 
 def save_rgb(fn, img):
     if len(img.shape) == 3 and img.shape[2] == 3:
@@ -93,9 +100,33 @@ def refine_mask(rgbimg, rawmask):
     crf_mask = np.array(res * 255, dtype=np.uint8)
     return crf_mask
 
+
+def bilateral_filter_regions(img: np.ndarray, rects: List[Tuple[int, int, int, int]]) -> np.ndarray:
+    """
+    Same as `cv2.bilateralFilter(img, 17, 80, 80)` inside each (x, y, w, h) rect; zero elsewhere.
+    Each rect is filtered with BILATERAL_RADIUS pixels of context around it (clipped to the image),
+    so the pixels inside the rect match filtering the whole image.
+    """
+    img_h, img_w = img.shape[:2]
+    filtered = np.zeros_like(img)
+    for (x, y, w, h) in rects:
+        x_end = min(x + w, img_w)
+        y_end = min(y + h, img_h)
+        if w <= 0 or h <= 0 or x_end <= x or y_end <= y:
+            continue
+        px = max(x - BILATERAL_RADIUS, 0)
+        py = max(y - BILATERAL_RADIUS, 0)
+        px_end = min(x_end + BILATERAL_RADIUS, img_w)
+        py_end = min(y_end + BILATERAL_RADIUS, img_h)
+        padded = cv2.bilateralFilter(np.ascontiguousarray(img[py:py_end, px:px_end]), BILATERAL_D, 80, 80)
+        filtered[y:y_end, x:x_end] = padded[y - py:y_end - py, x - px:x_end - px]
+    return filtered
+
 def complete_mask(img: np.ndarray, mask: np.ndarray, textlines: List[Quadrilateral], keep_threshold = 1e-2, dilation_offset = 0,kernel_size=3):
     bboxes = [txtln.aabb.xywh for txtln in textlines]
     polys = [Polygon(txtln.pts) for txtln in textlines]
+    polys_arr = np.array(polys, dtype=object)
+    polys_area = shapely.area(polys_arr)
     for (x, y, w, h) in bboxes:
         cv2.rectangle(mask, (x, y), (x + w, y + h), (0), 1)
     num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(mask)
@@ -120,12 +151,9 @@ def complete_mask(img: np.ndarray, mask: np.ndarray, textlines: List[Quadrilater
         cc_pts = np.array([[x1, y1], [x1 + w1, y1], [x1 + w1, y1 + h1], [x1, y1 + h1]])
         cc_poly = Polygon(cc_pts)
 
-        for tl_idx in range(M):
-            area2 = polys[tl_idx].area
-            overlapping_area = polys[tl_idx].intersection(cc_poly).area
-            ratio_mat[label, tl_idx] = overlapping_area / min(area1, area2)
-            dist_mat[label, tl_idx] = polys[tl_idx].distance(cc_poly.centroid)
-            # print(textlines[tl_idx].pts, cc_pts, '->', overlapping_area, min(area1, area2), '=', overlapping_area / min(area1, area2), '|', polys[tl_idx].distance(cc_poly))
+        overlapping_area = shapely.area(shapely.intersection(polys_arr, cc_poly))
+        ratio_mat[label] = overlapping_area / np.minimum(area1, polys_area)
+        dist_mat[label] = shapely.distance(polys_arr, cc_poly.centroid)
 
         avg = np.argmax(ratio_mat[label])
         # print(avg, 'overlap:', ratio_mat[label, avg], '<=', keep_threshold)
@@ -166,11 +194,19 @@ def complete_mask(img: np.ndarray, mask: np.ndarray, textlines: List[Quadrilater
     textline_rects[:, 3] -= textline_rects[:, 1]
     
     final_mask = np.zeros_like(mask)
-    img = cv2.bilateralFilter(img, 17, 80, 80)
-    for i, cc in enumerate(tqdm(textline_ccs, '[mask]')):
+    # The region around each textline that is refined below
+    text_sizes = []
+    refine_rects = []
+    for i in range(M):
         x1, y1, w1, h1 = textline_rects[i]
         text_size = min(w1, h1, textlines[i].font_size)
-        x1, y1, w1, h1 = extend_rect(x1, y1, w1, h1, img.shape[1], img.shape[0], int(text_size * 0.1))
+        text_sizes.append(text_size)
+        refine_rects.append(extend_rect(x1, y1, w1, h1, img.shape[1], img.shape[0], int(text_size * 0.1)))
+    # Only the refine rects of the filtered image are read, so skip filtering the rest of the page
+    img = bilateral_filter_regions(img, refine_rects)
+    for i, cc in enumerate(tqdm(textline_ccs, '[mask]')):
+        text_size = text_sizes[i]
+        x1, y1, w1, h1 = refine_rects[i]
         # TODO: Need to think of better way to determine dilate_size.
         dilate_size = max((int((text_size + dilation_offset) * 0.3) // 2) * 2 + 1, 3)
         # print(textlines[i].font_size, min(w1, h1), dilate_size)
