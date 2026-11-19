@@ -117,7 +117,7 @@ class Model48pxOCR(OfflineOCR):
             if self.use_gpu:
                 image_tensor = image_tensor.to(self.device)
             with torch.no_grad():
-                ret = self.model.infer_beam_batch_tensor(image_tensor, widths, beams_k = 5, max_seq_length = 255)
+                ret = self.model.infer_beam_batch_tensor(image_tensor, widths, beams_k = config.beams_k, max_seq_length = 255)
             for i, (pred_chars_index, prob, fg_pred, bg_pred, fg_ind_pred, bg_ind_pred) in enumerate(ret):
                 if prob < threshold:
                     continue
@@ -600,6 +600,9 @@ class OCR(nn.Module):
     def infer_beam_batch(self, img: torch.FloatTensor, img_widths: List[int], beams_k: int = 5, start_tok = 1, end_tok = 2, pad_tok = 0, max_finished_hypos: int = 2, max_seq_length = 384):
         N, C, H, W = img.shape
         assert H == 48 and C == 3
+        # Never wait for more finished hypotheses than the beam can hold, so a
+        # beam of 1 stops as soon as its single hypothesis ends.
+        max_finished_hypos = min(max_finished_hypos, beams_k)
         memory = self.backbone(img)
         memory = einops.rearrange(memory, 'N C 1 W -> N W C')
         valid_feats_length = [(x + 3) // 4 + 2 for x in img_widths]
@@ -678,6 +681,10 @@ class OCR(nn.Module):
     def infer_beam_batch_tensor(self, img: torch.FloatTensor, img_widths: List[int], beams_k: int = 5, start_tok = 1, end_tok = 2, pad_tok = 0, max_finished_hypos: int = 2, max_seq_length = 384):
         N, C, H, W = img.shape
         assert H == 48 and C == 3
+        # Never wait for more finished hypotheses than the beam can hold.
+        # Without this cap a beam of 1 never reaches 2 finished hypotheses and
+        # always runs to max_seq_length.
+        max_finished_hypos = min(max_finished_hypos, beams_k)
 
         memory = self.backbone(img)
         memory = einops.rearrange(memory, 'N C 1 W -> N W C')

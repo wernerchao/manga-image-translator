@@ -1056,6 +1056,7 @@ use_mocr_merge    Use bounding box merging during Manga OCR inference
 ocr               The Optical Character Recognition (OCR) model to use
 min_text_length   Minimum text length for a text area
 ignore_bubble     Threshold for ignoring non-bubble area text, valid values range from 1-50. Recommended 5 to 10. If too low, normal bubble areas might be ignored, if too large, non-bubble areas might be treated as normal bubbles
+beams_k           Beam search width for the 48px OCR model (default 5). 1 means greedy decoding
 ```
 
 #### Other Options
