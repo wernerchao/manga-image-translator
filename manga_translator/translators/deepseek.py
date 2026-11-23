@@ -116,14 +116,14 @@ class DeepseekTranslator(CommonGPTTranslator):
             prompt, query_size = self._assemble_prompts(from_lang, to_lang, prompt_queries).__next__()  
             self.logger.debug(f'-- GPT Prompt{split_prefix} --\n' + self._format_prompt_log(to_lang, prompt))  
 
-            for attempt in range(RETRY_ATTEMPTS):  
-                try:  
+            # The error of the last attempt, if it got no answer at all; None once one answers.
+            request_error = None
+            for attempt in range(RETRY_ATTEMPTS):
+                try:
                     # Start the translation request with timeout handling
                     request_task = asyncio.create_task(self._request_translation(to_lang, prompt))
                     started = time.time()
                     timeout_attempt = 0
-                    ratelimit_attempt = 0
-                    server_error_attempt = 0
                     while not request_task.done():
                         await asyncio.sleep(0.1)
                         if time.time() - started > self._TIMEOUT + (timeout_attempt * self._TIMEOUT / 2):
@@ -137,7 +137,8 @@ class DeepseekTranslator(CommonGPTTranslator):
                             started = time.time()
 
                     # Get the response
-                    response = await request_task  
+                    response = await request_task
+                    request_error = None
                     self.logger.debug(f'-- GPT Response{split_prefix} --\n' + response)  
 
                     # Split response into translations  
@@ -183,21 +184,27 @@ class DeepseekTranslator(CommonGPTTranslator):
                     self.logger.debug(f'Completed translations: {[t if t else queries[i] for i, t in enumerate(translations)]}')        
                     return True  # Successfully translated this batch  
                     
-                except openai.APIError:  
-                    server_error_attempt += 1
-                    if server_error_attempt >= self._RETRY_ATTEMPTS:
-                        self.logger.error(
-                            'Deepseek encountered a server error, possibly due to high server load. Use a different translator or try again later.')
-                        raise
-                    self.logger.warning(f'Restarting request due to a server error. Attempt: {server_error_attempt}')
-                    await asyncio.sleep(1)
-                except Exception as e:  
-                    self.logger.error(f'Error during translation attempt: {e}')  
-                    if attempt == RETRY_ATTEMPTS - 1:  
-                        raise  
-                    await asyncio.sleep(1)  
+                except (openai.AuthenticationError, openai.PermissionDeniedError) as e:
+                    # A rejected key is rejected again: retrying or splitting only adds wait.
+                    request_error = e
+                    break
+                except Exception as e:
+                    request_error = e
+                    self.logger.warning(f'DeepSeek request failed (attempt {attempt + 1}/{RETRY_ATTEMPTS}): {e}')
+                    if attempt < RETRY_ATTEMPTS - 1:
+                        await asyncio.sleep(1)
 
-            # If retries exhausted and still not successful, proceed to split if allowed  
+            if request_error is not None:
+                # No answer at all, so a smaller batch can't help. Mark the lines failed, as the
+                # ChatGPT and Gemini translators do: empty strings would pass for a translation,
+                # and the caller would never fall back.
+                self.logger.error(
+                    f'DeepSeek request failed, marking {len(prompt_query_indices)} line(s) as not translated: {request_error}')
+                for idx in prompt_query_indices:
+                    translations[idx] = f'__FAILED_TO_TRANSLATE__: {queries[idx]}'
+                return False
+
+            # If retries exhausted and still not successful, proceed to split if allowed
             if split_level < MAX_SPLIT_ATTEMPTS:  
                 if split_level == 0:  
                     self.logger.warning('Retry limit reached. Starting to split the translation batch.')  
