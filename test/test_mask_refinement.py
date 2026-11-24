@@ -152,3 +152,15 @@ def test_bilateral_filter_regions_matches_whole_image(rect):
     outside = np.ones(img.shape[:2], dtype = bool)
     outside[y:y+h, x:x+w] = False
     assert not actual[outside].any()
+
+
+def test_complete_mask_ignores_zero_area_textline():
+    img, mask, textlines = make_page(0)
+    expected = complete_mask(img.copy(), mask.copy(), textlines)
+    collinear = Quadrilateral(np.array([[10, 10], [20, 10], [30, 10], [40, 10]], dtype = np.float64), '', 1)
+
+    actual = complete_mask(img.copy(), mask.copy(), textlines + [collinear])
+
+    assert expected is not None and expected.any()
+    np.testing.assert_array_equal(actual, expected)
+    assert complete_mask(img.copy(), mask.copy(), [collinear]) is None

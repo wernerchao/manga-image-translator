@@ -123,6 +123,11 @@ def bilateral_filter_regions(img: np.ndarray, rects: List[Tuple[int, int, int, i
     return filtered
 
 def complete_mask(img: np.ndarray, mask: np.ndarray, textlines: List[Quadrilateral], keep_threshold = 1e-2, dilation_offset = 0,kernel_size=3):
+    # Drop zero-area textlines (all corners on one line). Their overlap ratio is 0 / 0 = NaN, which
+    # np.argmax picks for every component, so the whole page would silently get an empty mask.
+    textlines = [txtln for txtln in textlines if Polygon(txtln.pts).area > 0]
+    if not textlines:
+        return None
     bboxes = [txtln.aabb.xywh for txtln in textlines]
     polys = [Polygon(txtln.pts) for txtln in textlines]
     polys_arr = np.array(polys, dtype=object)
